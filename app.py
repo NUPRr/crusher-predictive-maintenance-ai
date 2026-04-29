@@ -9,11 +9,31 @@ from datetime import datetime
 # --- 1. SETUP & THEME ---
 st.set_page_config(page_title="Crusher Intel AI", layout="wide")
 
-# Theme-aware CSS
+# Updated CSS for Responsive Text
 st.markdown("""
     <style>
-    [data-testid="stMetric"] { background-color: rgba(28, 131, 225, 0.1); padding: 15px; border-radius: 10px; border-left: 5px solid #0072f5; }
-    .stAlert { border-radius: 10px; }
+    /* Laptop/Desktop par bada dikhega */
+    h1 {
+        font-size: 2.5rem !important;
+    }
+    
+    /* Mobile Screen (width < 768px) par font chota ho jayega */
+    @media (max-width: 768px) {
+        h1 {
+            font-size: 1.5rem !important;
+            text-align: center;
+        }
+        [data-testid="stMetric"] {
+            padding: 10px;
+        }
+    }
+
+    [data-testid="stMetric"] { 
+        background-color: rgba(28, 131, 225, 0.1); 
+        padding: 15px; 
+        border-radius: 10px; 
+        border-left: 5px solid #0072f5; 
+    }
     </style>
     """, unsafe_allow_html=True)
 
