@@ -19,11 +19,20 @@ with open('crusher_model.pkl', 'rb') as f:
 # --- 3. MOBILE-FRIENDLY UI SETUP ---
 st.set_page_config(page_title="Crusher AI Health", page_icon="🏗️", layout="centered")
 
-# Custom CSS for that "Aesthetic" touch
+# Updated CSS for "Smart" visibility in Light & Dark mode
 st.markdown("""
     <style>
-    .stMetric { background-color: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #e0e0e0; }
-    .stAlert { border-radius: 12px; }
+    /* This makes the metric cards look good in both modes */
+    [data-testid="stMetric"] {
+        background-color: rgba(128, 128, 128, 0.1); /* Subtle gray that works on black or white */
+        padding: 15px;
+        border-radius: 12px;
+        border: 1px solid rgba(128, 128, 128, 0.2);
+    }
+    /* Ensures the numbers are always a visible color */
+    [data-testid="stMetricValue"] {
+        font-weight: bold;
+    }
     </style>
     """, unsafe_allow_html=True)
 
