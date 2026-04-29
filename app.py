@@ -45,16 +45,29 @@ head_c2.write("**Site:** Thane Quarry - Site B")
 head_c3.write("**Status:** 🛰️ IoT Connected")
 st.divider()
 
-# --- 5. CONTROLS (Sidebar) ---
+# --- 5. CONTROLS (Sidebar & Main) ---
 st.sidebar.title("🛠️ System Controls")
 live_mode = st.sidebar.toggle("🛰️ Live Simulation", value=False)
 
+# 1. Clear Logs Button (Sidebar)
+st.sidebar.divider()
+st.sidebar.subheader("🧹 Data Management")
+if st.sidebar.button("Clear Maintenance Logs"):
+    c.execute("DELETE FROM history")
+    conn.commit()
+    st.sidebar.success("Logs cleared!")
+    time.sleep(1) # Give user a second to see the success message
+    st.rerun()
+
+# 2. Sensor Inputs (Main Page - NOT inside an 'else' for the button)
 if live_mode:
+    # Simulation Logic
     temp = 60 + np.sin(time.time()/5) * 15 + np.random.normal(0, 1)
     vib = 3.0 + np.cos(time.time()/5) * 2 + np.random.normal(0, 0.2)
-    time.sleep(0.5) 
+    time.sleep(0.5)
     st.rerun()
 else:
+    # Manual Slider Logic
     sc1, sc2 = st.columns(2)
     temp = sc1.slider("🌡️ Temp (°C)", 30, 120, 65)
     vib = sc2.slider("📳 Vib (Hz)", 0.0, 10.0, 4.2)
@@ -100,15 +113,15 @@ else:
 
 st.divider()
 
-# --- 10. MAINTENANCE LOGBOOK (The Table) ---
+# --- 10. MAINTENANCE LOGBOOK ---
 st.subheader("📅 Automated Maintenance Logbook")
+
+# Re-fetch logs after potential deletion
 logs = pd.read_sql_query("SELECT * FROM history ORDER BY timestamp DESC LIMIT 5", conn)
 
 if not logs.empty:
     st.table(logs)
+    st.caption("Showing last 5 critical incidents.")
 else:
-    st.info("No critical incidents logged. Machine is running smoothly.")
-
-# Space for bottom overlap
-st.write("")
-st.write("")
+    # This shows up after you hit the Clear button
+    st.info("Logbook is currently empty. No active maintenance alerts.")
