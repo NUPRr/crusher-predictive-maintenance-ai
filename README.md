@@ -18,4 +18,4 @@ This system uses **Machine Learning** to predict industrial equipment failure be
 # 🏗️ Crusher AI: Industrial Predictive Maintenance
 
 ### 📺 Live Project Demo
-![Crusher AI Demo](demo.gif)
+![Crusher AI Demo](demo)
