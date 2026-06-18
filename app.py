@@ -22,10 +22,11 @@ st.markdown("""
 with open('crusher_model.pkl', 'rb') as f:
     model = pickle.load(f)
 
-# Database for Persistent Logs
+# Database Setup (Aligned with actual schema)
 conn = sqlite3.connect('crusher_pro.db', check_same_thread=False)
 c = conn.cursor()
-c.execute('CREATE TABLE IF NOT EXISTS history (timestamp TEXT, temp REAL, vib REAL, risk REAL)')
+# Ensure table exists using the correct name and columns
+c.execute('CREATE TABLE IF NOT EXISTS logs (timestamp TEXT, temperature REAL, vibration REAL, status TEXT)')
 conn.commit()
 
 # --- 3. SESSION STATE (The Memory Fix) ---
@@ -49,28 +50,30 @@ st.divider()
 st.sidebar.title("🛠️ System Controls")
 live_mode = st.sidebar.toggle("🛰️ Live Simulation", value=False)
 
-# 1. Clear Logs Button (Sidebar)
-st.sidebar.divider()
-st.sidebar.subheader("🧹 Data Management")
-if st.sidebar.button("Clear Maintenance Logs"):
-    c.execute("DELETE FROM history")
-    conn.commit()
-    st.sidebar.success("Logs cleared!")
-    time.sleep(1) # Give user a second to see the success message
-    st.rerun()
-
-# 2. Sensor Inputs (Main Page - NOT inside an 'else' for the button)
 if live_mode:
-    # Simulation Logic
-    temp = 60 + np.sin(time.time()/5) * 15 + np.random.normal(0, 1)
-    vib = 3.0 + np.cos(time.time()/5) * 2 + np.random.normal(0, 0.2)
+    # Generate live data and store it in session state
+    st.session_state.temp = 60 + np.sin(time.time()/5) * 15 + np.random.normal(0, 1)
+    st.session_state.vib = 3.0 + np.cos(time.time()/5) * 2 + np.random.normal(0, 0.2)
+    
+    temp = st.session_state.temp
+    vib = st.session_state.vib
+    
+    # A short pause for the live ticker feel, then rerun to pull the next stream data
     time.sleep(0.5)
     st.rerun()
 else:
-    # Manual Slider Logic
+    # Manual Slider Logic with unique keys to prevent duplicate element errors
     sc1, sc2 = st.columns(2)
-    temp = sc1.slider("🌡️ Temp (°C)", 30, 120, 65)
-    vib = sc2.slider("📳 Vib (Hz)", 0.0, 10.0, 4.2)
+    temp = sc1.slider("🌡️ Temp (°C)", 30, 120, 65, key="manual_temp_slider")
+    vib = sc2.slider("📳 Vib (Hz)", 0.0, 10.0, 4.2, key="manual_vib_slider")
+
+# Clear Logs Button (Sidebar)
+if st.sidebar.button("Clear Maintenance Logs"):
+    c.execute("DELETE FROM logs")
+    conn.commit()
+    st.sidebar.success("Logs cleared!")
+    time.sleep(1)
+    st.rerun()
 
 # --- 6. PREDICTION & MEMORY ---
 features = pd.DataFrame([[temp, vib]], columns=['Temperature', 'Vibration'])
@@ -102,26 +105,20 @@ with g_col2:
 if risk_prob > 80:
     st.error(f"🚨 ALERT: CRITICAL RISK DETECTED ({risk_prob:.1f}%)")
     st.info("🛠️ **Action:** Inspect bearing housing and cooling fan immediately.")
-    # Log to Database
-    now = datetime.now().strftime("%H:%M:%S")
-    c.execute("INSERT INTO history VALUES (?,?,?,?)", (now, temp, vib, risk_prob))
+    
+    # Corrected SQL Insert Query
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    c.execute("INSERT INTO logs VALUES (?,?,?,?)", (now, temp, vib, "CRITICAL"))
     conn.commit()
-elif risk_prob > 50:
-    st.warning(f"⚠️ WARNING: Elevated Risk ({risk_prob:.1f}%) - Schedule maintenance.")
-else:
-    st.success("✅ System Health: Optimal")
-
-st.divider()
 
 # --- 10. MAINTENANCE LOGBOOK ---
 st.subheader("📅 Automated Maintenance Logbook")
 
-# Re-fetch logs after potential deletion
-logs = pd.read_sql_query("SELECT * FROM history ORDER BY timestamp DESC LIMIT 5", conn)
+# Corrected to pull from 'logs' table
+logs = pd.read_sql_query("SELECT * FROM logs ORDER BY timestamp DESC LIMIT 5", conn)
 
 if not logs.empty:
     st.table(logs)
     st.caption("Showing last 5 critical incidents.")
 else:
-    # This shows up after you hit the Clear button
     st.info("Logbook is currently empty. No active maintenance alerts.")
