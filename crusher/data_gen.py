@@ -1,29 +1,43 @@
 import pandas as pd
 import numpy as np
 
+# Set random seed for reproducibility (Good practice!)
+np.random.seed(42)
+
 # 1. Create a range of time
-data_size = 1000
+data_size = 1200  # Extended to simulate a full 50-day window
 time = pd.date_range(start='1/1/2026', periods=data_size, freq='h')
 
-# 2. Simulate random Temperature (Normal: 40-70°C) and Vibration (Normal: 1-4)
-temp = np.random.uniform(40, 70, size=data_size)
-vibration = np.random.uniform(1, 4, size=data_size)
+# 2. Simulate realistic machinery telemetry using a Normal Distribution
+# Healthy crushers average around 55°C and 2.5Hz vibration
+temp = np.random.normal(loc=55.0, scale=5.0, size=data_size)
+vibration = np.random.normal(loc=2.5, scale=0.4, size=data_size)
 
-# 3. Create a "Failure" logic: If Temp > 85 and Vibration > 6, it likely fails
-# Let's inject some "Anomalies" (Danger zones)
-temp[500:510] = np.random.uniform(85, 100, size=10)
-vibration[500:510] = np.random.uniform(6, 9, size=10)
+# 3. Inject realistic anomaly states (Siemens Operational Safety Hazard Simulation)
+# Let's simulate hours 500 to 520 as a severe bearing lubrication breakdown
+temp[500:520] = np.random.normal(loc=90.0, scale=4.0, size=20)
+vibration[500:520] = np.random.normal(loc=7.2, scale=0.8, size=20)
 
-# 4. Define 'Status': 0 is Healthy, 1 is Needs Repair
+# Simulate hours 900 to 915 as structural mounting loose bolt anomaly
+temp[900:915] = np.random.normal(loc=65.0, scale=3.0, size=15)
+vibration[900:915] = np.random.normal(loc=8.5, scale=0.5, size=15)
+
+# 4. Define 'Status' logic: 0 is Healthy, 1 is Maintenance Required
 status = []
 for t, v in zip(temp, vibration):
-    if t > 80 and v > 5:
-        status.append(1) # Fail
+    # If parameters cross critical thresholds, flag as failure risk
+    if t > 80.0 or v > 5.0:
+        status.append(1) # Critical Alert State
     else:
-        status.append(0) # Healthy
+        status.append(0) # Stable State
 
-# 5. Save to CSV
-df = pd.DataFrame({'Timestamp': time, 'Temperature': temp, 'Vibration': vibration, 'Status': status})
+# 5. Compile into structured dataframe & output to CSV
+df = pd.DataFrame({
+    'Timestamp': time, 
+    'Temperature': temp, 
+    'Vibration': vibration, 
+    'Status': status
+})
+
 df.to_csv('crusher_sensor_data.csv', index=False)
-
-print("Success! 'crusher_sensor_data.csv' has been created.")
+print(f"✅ Data Generation Complete. Saved {data_size} rows of realistic telemetry to 'crusher_sensor_data.csv'")
